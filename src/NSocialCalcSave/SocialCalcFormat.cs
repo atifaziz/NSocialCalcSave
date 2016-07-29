@@ -433,24 +433,6 @@ namespace NSocialCalcSave
 
         static bool IsYes(string s) => "yes".Equals(s, StringComparison.OrdinalIgnoreCase);
 
-        /* TODO remove as unused
-        static CellDataType ParseCellDataType(string s)
-        {
-            if (s.Length == 1)
-            {
-                switch (s[0])
-                {
-                    case 't': return CellDataType.Text;
-                    case 'v':
-                    case 'n': return CellDataType.Number;
-                    case 'f': return CellDataType.Formula;
-                    case 'c': return CellDataType.Constant;
-                }
-            }
-            throw new Exception("Unknown cell data type: " + s);
-        }
-        */
-
         static CellValueType ParseCellValueType(string s)
         {
             if (s.Length == 0)
