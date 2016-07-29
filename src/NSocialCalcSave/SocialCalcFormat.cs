@@ -109,99 +109,17 @@ namespace NSocialCalcSave
         //
 
         public static Sheet ParseSheetSave(string savedSheet) =>
-            ParseSheetSave(savedSheet,
-                (v, dt, vt, f, ro, errs,
-                 bt, br, bb, bl, layout, font, fc, bc, cf, ntvf, tvf, cs, rs,
-                 cssc, csss, comment) => new Cell
-                {
-                    DataValue          = v,
-                    DataType           = dt,
-                    ValueType          = vt,
-                    Formula            = f,
-                    ReadOnly           = ro,
-                    Errors             = errs,
-                    Bt                 = bt,
-                    Br                 = br,
-                    Bb                 = bb,
-                    Bl                 = bl,
-                    Layout             = layout,
-                    Font               = font,
-                    Color              = fc,
-                    BgColor            = bc,
-                    CellFormat         = cf,
-                    NonTextValueFormat = ntvf,
-                    TextValueFormat    = tvf,
-                    ColSpan            = cs,
-                    RowSpan            = rs,
-                    Cssc               = cssc,
-                    Csss               = csss,
-                    Comment            = comment,
+            ParseSheetSave(savedSheet.SplitIntoLines());
 
-                },
-                (name, desc, def) => new NamedRange
-                {
-                    Name = name,
-                    Description = desc,
-                    Definition = def,
-                },
-                (cells, colws, colhds, rowhs, rowhds, names, layouts, fonts, colors, bs, cfs, vfs,
-                 lcol, lrow, dcw, drh, dtf, dntf, dl, df, dtvf, dntvf, dfc, dbc,
-                 crc, recalc, needsRecalc, umxcol, umxrow, cf) => new Sheet
-                {
-                    Cells                     = cells,
-
-                    ColWidths                 = colws,
-                    ColHides                  = colhds,
-                    RowHeights                = rowhs,
-                    RowHides                  = rowhds,
-                    Names                     = names,
-                    Layouts                   = layouts,
-                    Fonts                     = fonts,
-                    Colors                    = colors,
-                    BorderStyles              = bs,
-                    CellFormats               = cfs,
-                    ValueFormats              = vfs,
-
-                    LastCol                   = lcol,
-                    LastRow                   = lrow,
-                    DefaultColWidth           = dcw,
-                    DefaultRowHeight          = drh,
-                    DefaultTextFormat         = dtf,
-                    DefaultNonTextFormat      = dntf,
-                    DefaultLayout             = dl,
-                    DefaultFont               = df,
-                    DefaultTextValueFormat    = dtvf,
-                    DefaultNonTextValueFormat = dntvf,
-                    DefaultColor              = dfc,
-                    DefaultBgColor            = dbc,
-                    CircularReferenceCell     = crc,
-                    Recalc                    = recalc,
-                    NeedsRecalc               = needsRecalc,
-                    UserMaxCol                = umxcol,
-                    UserMaxRow                = umxrow,
-
-                    CopiedFrom                = cf,
-                });
-
-        public static TSheet ParseSheetSave<TSheet, TCell, TName>(string savedSheet,
-            CellSelector<TCell> cellSelector,
-            NameSelector<TName> nameSelector,
-            SheetSelector<TSheet, TName, TCell> sheetSelector) =>
-            ParseSheetSave(savedSheet.SplitIntoLines(), cellSelector, nameSelector, sheetSelector);
-
-        static TSheet ParseSheetSave<TSheet, TCell, TName>(
-            IEnumerable<string> savedSheetLines,
-            CellSelector<TCell> cellSelector,
-            NameSelector<TName> nameSelector,
-            SheetSelector<TSheet, TName, TCell> sheetSelector)
+        static Sheet ParseSheetSave(IEnumerable<string> savedSheetLines)
         {
-            var cells = new List<KeyValuePair<string, TCell>>();
+            var cells = new List<KeyValuePair<string, Cell>>();
 
             var colWidths    = new List<KeyValuePair<string, string>>();
             var colHides     = new List<KeyValuePair<string, bool>>();
             var rowHeights   = new List<KeyValuePair<int, int>>();
             var rowHides     = new List<KeyValuePair<int, bool>>();
-            var names        = new List<TName>();
+            var names        = new List<NamedRange>();
             var layouts      = new List<KeyValuePair<int, string>>();
             var fonts        = new List<KeyValuePair<int, string>>();
             var colors       = new List<KeyValuePair<int, string>>();
@@ -237,7 +155,7 @@ namespace NSocialCalcSave
                     case "cell":
                     {
                         var cell = pe.Read();
-                        cells.Add(cell.AsKeyTo(ParseCell(pe, cellSelector)));
+                        cells.Add(cell.AsKeyTo(ParseCell(pe)));
                         break;
                     }
                     case "col":
@@ -297,7 +215,13 @@ namespace NSocialCalcSave
                         }
                         break;
                     }
-                    case "name"       : names.Add(nameSelector(DecodeFromSave(pe.Read()).ToUpperInvariant(), DecodeFromSave(pe.Read()), DecodeFromSave(pe.Read()))); break;
+                    case "name"       : names.Add(new NamedRange
+                                        {
+                                            Name        = DecodeFromSave(pe.Read()).ToUpperInvariant(),
+                                            Description = DecodeFromSave(pe.Read()),
+                                            Definition  = DecodeFromSave(pe.Read())
+                                        });
+                                        break;
                     case "layout"     : layouts.Add(ParseInt(pe.Read()).AsKeyTo(string.Join(":", parts.Skip(2)) /* layouts can have ":" in them */)); break;
                     case "font"       : fonts.Add(ParseInt(pe.Read()).AsKeyTo(pe.Read())); break;
                     case "color"      : colors.Add(ParseInt(pe.Read()).AsKeyTo(pe.Read())); break;
@@ -317,37 +241,42 @@ namespace NSocialCalcSave
                 }
             }
 
-            return sheetSelector(
-                cells,
-                colWidths,
-                colHides,
-                rowHeights,
-                rowHides,
-                names,
-                layouts,
-                fonts,
-                colors,
-                borderStyles,
-                cellFormats,
-                valueFormats,
-                lastCol,
-                lastRow,
-                defaultColWidth,
-                defaultRowHeight,
-                defaultTextFormat,
-                defaultNonTextFormat,
-                defaultLayout,
-                defaultFont,
-                defaultTextValueFormat,
-                defaultNonTextValueFormat,
-                defaultColor,
-                defaultBgColor,
-                circularReferenceCell,
-                recalc,
-                needsRecalc,
-                userMaxCol,
-                userMaxRow,
-                copiedFrom);
+            return new Sheet
+            {
+                Cells                     = cells,
+
+                ColWidths                 = colWidths,
+                ColHides                  = colHides,
+                RowHeights                = rowHeights,
+                RowHides                  = rowHides,
+                Names                     = names,
+                Layouts                   = layouts,
+                Fonts                     = fonts,
+                Colors                    = colors,
+                BorderStyles              = borderStyles,
+                CellFormats               = cellFormats,
+                ValueFormats              = valueFormats,
+
+                LastCol                   = lastCol,
+                LastRow                   = lastRow,
+                DefaultColWidth           = defaultColWidth,
+                DefaultRowHeight          = defaultRowHeight,
+                DefaultTextFormat         = defaultTextFormat,
+                DefaultNonTextFormat      = defaultNonTextFormat,
+                DefaultLayout             = defaultLayout,
+                DefaultFont               = defaultFont,
+                DefaultTextValueFormat    = defaultTextValueFormat,
+                DefaultNonTextValueFormat = defaultNonTextValueFormat,
+                DefaultColor              = defaultColor,
+                DefaultBgColor            = defaultBgColor,
+                CircularReferenceCell     = circularReferenceCell,
+                Recalc                    = recalc,
+                NeedsRecalc               = needsRecalc,
+                UserMaxCol                = userMaxCol,
+                UserMaxRow                = userMaxRow,
+
+                CopiedFrom                = copiedFrom
+            };
         }
 
         static string DecodeFromSave(string s) =>
@@ -364,7 +293,7 @@ namespace NSocialCalcSave
         static int ParseInt(string s) => int.Parse(s, CultureInfo.InvariantCulture);
         static double ParseNum(string s) => double.Parse(s, CultureInfo.InvariantCulture);
 
-        static T ParseCell<T>(IEnumerator<string> token, CellSelector<T> selector)
+        static Cell ParseCell(IEnumerator<string> token)
         {
             var dataValue          = default(object);
             var dataType           = default(CellDataType);
@@ -475,15 +404,31 @@ namespace NSocialCalcSave
                 }
             }
 
-            return selector(dataValue, dataType, valueType, formula,
-                            readOnly, errors,
-                            bt, br, bb, bl,
-                            layout,
-                            font, color, bgcolor,
-                            cellFormat, nonTextValueFormat, textValueFormat,
-                            colspan, rowspan,
-                            cssc, csss,
-                            comment);
+            return new Cell
+            {
+                DataValue          = dataValue,
+                DataType           = dataType,
+                ValueType          = valueType,
+                Formula            = formula,
+                ReadOnly           = readOnly,
+                Errors             = errors,
+                Bt                 = bt,
+                Br                 = br,
+                Bb                 = bb,
+                Bl                 = bl,
+                Layout             = layout,
+                Font               = font,
+                Color              = color,
+                BgColor            = bgcolor,
+                CellFormat         = cellFormat,
+                NonTextValueFormat = nonTextValueFormat,
+                TextValueFormat    = textValueFormat,
+                ColSpan            = colspan,
+                RowSpan            = rowspan,
+                Cssc               = cssc,
+                Csss               = csss,
+                Comment            = comment,
+            };
         }
 
         static bool IsYes(string s) => "yes".Equals(s, StringComparison.OrdinalIgnoreCase);
@@ -560,55 +505,6 @@ namespace NSocialCalcSave
             throw new Exception("Unknown cell value type: " + s);
         }
     }
-
-    public delegate TSheet SheetSelector<out TSheet, TName, TCell>(
-
-        ICollection<KeyValuePair<string, TCell>> cells,
-
-        ICollection<KeyValuePair<string, string>> colWidths,
-        ICollection<KeyValuePair<string, bool>> colHides,
-        ICollection<KeyValuePair<int, int>> rowHeights,
-        ICollection<KeyValuePair<int, bool>> rowHides,
-        ICollection<TName> names,
-        ICollection<KeyValuePair<int, string>> layouts,
-        ICollection<KeyValuePair<int, string>> fonts,
-        ICollection<KeyValuePair<int, string>> colors,
-        ICollection<KeyValuePair<int, string>> borderStyles,
-        ICollection<KeyValuePair<int, string>> cellFormats,
-        ICollection<KeyValuePair<int, string>> valueFormats,
-
-        int lastCol,
-        int lastRow,
-        string defaultColWidth,
-        int defaultRowHeight,
-        int defaultTextFormat,
-        int defaultNonTextFormat,
-        int defaultLayout,
-        int defaultFont,
-        int defaultTextValueFormat,
-        int defaultNonTextValueFormat,
-        int defaultColor,
-        int defaultBgColor,
-        string circularReferenceCell,
-        string recalc,
-        bool needsRecalc,
-        int userMaxCol,
-        int userMaxRow,
-        string copiedFrom
-    );
-
-    public delegate T NameSelector<out T>(string name, string description, string definition);
-
-    public delegate T CellSelector<out T>(
-        object dataValue, CellDataType dataType, CellValueType valueType, string formula,
-        bool readOnly, string errors,
-        int bt, int br, int bb, int bl,
-        int layout,
-        int font, int color, int bgColor,
-        int cellFormat, int nonTextValueFormat, int textValueFormat,
-        int colSpan, int rowSpan,
-        string cssc, string csss,
-        string comment);
 
     public enum CellDataType
     {
