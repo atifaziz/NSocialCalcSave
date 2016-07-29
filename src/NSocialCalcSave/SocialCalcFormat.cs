@@ -29,9 +29,8 @@ namespace NSocialCalcSave
 
     public class SocialCalcFormat
     {
-        //
-        // Sheet save format:
-        //
+        #region Sheet Save Format
+
         // linetype:param1:param2:...
         //
         // Linetypes are:
@@ -106,7 +105,8 @@ namespace NSocialCalcSave
         // If this is clipboard contents, then there is also information to facilitate pasting:
         //
         //    copiedfrom:upperleftcoord:bottomrightcoord - range from which this was copied
-        //
+
+        #endregion
 
         public static Sheet ParseSheetSave(string savedSheet) =>
             ParseSheetSave(savedSheet.SplitIntoLines());
