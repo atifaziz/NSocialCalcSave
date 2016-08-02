@@ -27,7 +27,7 @@ namespace NSocialCalcSave
 
     #endregion
 
-    public class SocialCalcFormat
+    public static class SocialCalcFormat
     {
         #region Sheet Save Format
 
