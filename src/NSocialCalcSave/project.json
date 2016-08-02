@@ -3,7 +3,7 @@
     "version": "1.0.0-alpha-*",
 
     "authors": [ "Atif Aziz" ],
-    "copyright": "Copyright \u00a9 2016 Atif Aziz. Portions Copyright \u00a9 2008, 2009, 2010 Socialtext, Inc.",
+    "copyright": "Copyright \u00a9 2016 Atif Aziz. Portions Copyright \u00a9 2008, 2009, 2010 Socialtext, Inc. Portions Copyright \u00a9 Marcel Narings. Portions Copyright \u00a9 2004-2006 Novell, Inc. Portions Copyright \u00a9 Xamarin Inc.",
     "description": "Library for parsing and writing SocialCalc sheet save format.",
 
     "packOptions": {

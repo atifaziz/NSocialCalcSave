@@ -21,7 +21,10 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("N/A")]
 [assembly: AssemblyProduct("NSocialCalcSave")]
 [assembly: AssemblyCopyright("Copyright \u00a9 2016 Atif Aziz. " +
-                             "Portions Copyright \u00a9 2008, 2009, 2010 Socialtext, Inc.")]
+                             "Portions Copyright \u00a9 2008, 2009, 2010 Socialtext, Inc. " +
+                             "Portions Copyright \u00a9 Marcel Narings. " +
+                             "Portions Copyright \u00a9 2004-2006 Novell, Inc. " +
+                             "Portions Copyright \u00a9 Xamarin Inc.")]
 [assembly: AssemblyTrademark("")]
 
 [assembly: ComVisible(false)]
