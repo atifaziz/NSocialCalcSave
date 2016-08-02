@@ -74,6 +74,7 @@ namespace Mannex
 
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using IO;
 
     #endregion
@@ -104,6 +105,45 @@ namespace Mannex
             using (var line = reader.ReadLines())
                 while (line.MoveNext())
                     yield return line.Current;
+        }
+
+        /// <summary>
+        /// Splits a string into a pair using a specified character to 
+        /// separate the two.
+        /// </summary>
+        /// <remarks>
+        /// Neither half in the resulting pair is ever <c>null</c>.
+        /// </remarks>
+
+        public static T Split<T>(this string str, char separator, Func<string, string, T> resultFunc)
+        {
+            if (str == null) throw new ArgumentNullException("str");
+            if (resultFunc == null) throw new ArgumentNullException("resultFunc");
+            return SplitRemoving(str, str.IndexOf(separator), 1, resultFunc);
+        }
+
+        /// <summary>
+        /// Splits a string into a pair by removing a portion of the string.
+        /// </summary>
+        /// <remarks>
+        /// Neither half in the resulting pair is ever <c>null</c>.
+        /// </remarks>
+
+        static T SplitRemoving<T>(string str, int index, int count, Func<string, string, T> resultFunc)
+        {
+            Debug.Assert(str != null);
+            Debug.Assert(count > 0);
+            Debug.Assert(resultFunc != null);
+
+            var a = index < 0
+                  ? str
+                  : str.Substring(0, index);
+
+            var b = index < 0 || index + 1 >= str.Length
+                  ? string.Empty
+                  : str.Substring(index + count);
+
+            return resultFunc(a, b);
         }
     }
 }

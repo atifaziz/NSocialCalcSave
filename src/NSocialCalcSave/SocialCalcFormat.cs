@@ -20,8 +20,10 @@ namespace NSocialCalcSave
 
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Globalization;
+    using System.Text;
     using Mannex;
     using Mannex.Collections.Generic;
 
@@ -358,7 +360,9 @@ namespace NSocialCalcSave
                                   ? (valueType == CellValueType.Logical ? ParseInt(token.Read()) != 0 : (object)ParseNum(token.Read()))
                                   : DecodeFromSave(token.Read());
                         formula = DecodeFromSave(token.Read());
-                        dataType = type[1] == 'c' ? CellDataType.Constant : CellDataType.Formula;
+                        var vtt = type[2];
+                        Debug.Assert(vtt == 'c' || vtt == 'f');
+                        dataType = vtt == 'c' ? CellDataType.Constant : CellDataType.Formula;
                         break;
                     case "ro": readOnly = IsYes(DecodeFromSave(token.Read())); break;
                     // e:errortext - Error text. Non-blank means formula parsing/calculation results in error.
@@ -473,18 +477,193 @@ namespace NSocialCalcSave
                 case 'e':
                     switch (s)
                     {
-                        case "e#N/A":
-                        case "e#NULL!":
-                        case "e#NUM!":
-                        case "e#DIV/0!":
-                        case "e#VALUE!":
-                        case "e#REF!":
-                        case "e#NAME?":
-                            return CellValueType.Error;
+                        case "e#N/A"   : return CellValueType.ErrorNA;
+                        case "e#NULL!" : return CellValueType.ErrorNull;
+                        case "e#NUM!"  : return CellValueType.ErrorNum;
+                        case "e#DIV/0!": return CellValueType.ErrorDiv0;
+                        case "e#VALUE!": return CellValueType.ErrorValue;
+                        case "e#REF!"  : return CellValueType.ErrorRef;
+                        case "e#NAME?" : return CellValueType.ErrorName;
                     }
                     break;
             }
             throw new Exception("Unknown cell value type: " + s);
+        }
+
+        public static string Format(this Sheet sheet) =>
+            string.Join(Environment.NewLine, sheet.FormatCore());
+
+        static IEnumerable<string> FormatCore(this Sheet sheet) =>
+            from ss in new[]
+            {
+                new[] { "version:1.5" },
+
+                from e in sheet.Cells ?? Enumerable.Empty<KeyValuePair<string, Cell>>()
+                select e.Value.Format(e.Key),
+
+                Format(sheet.ColWidths , (f, e) => f.Append("col", e.Key).Append("w", e.Value)),
+                Format(sheet.ColHides  , (f, e) => f.Append("col", e.Key).Append("hide", e.Value)),
+                Format(sheet.RowHeights, (f, e) => f.Append("row", e.Key).Append("h", e.Value)),
+                Format(sheet.RowHides  , s => from rh in s where rh.Value select rh, (f, e) => f.Append("row", e.Key).Append("hide", e.Value)),
+
+                new[]
+                {
+                    SaveFormatter.New()
+                                 .Append("sheet")
+                                 .AppendOpt("c", sheet.LastCol)
+                                 .AppendOpt("r", sheet.LastRow)
+                                 .AppendOpt("w", sheet.DefaultColWidth)
+                                 .AppendOpt("h", sheet.DefaultRowHeight)
+                                 .AppendOpt("tf", sheet.DefaultTextFormat)
+                                 .AppendOpt("tvf", sheet.DefaultTextValueFormat)
+                                 .AppendOpt("ntf", sheet.DefaultNonTextFormat)
+                                 .AppendOpt("ntvf", sheet.DefaultNonTextValueFormat)
+                                 .AppendOpt("layout", sheet.DefaultLayout)
+                                 .AppendOpt("font", sheet.DefaultFont)
+                                 .AppendOpt("color", sheet.DefaultColor)
+                                 .AppendOpt("bgcolor", sheet.DefaultBgColor)
+                                 .AppendOpt("circularreferencecell", sheet.CircularReferenceCell)
+                                 .AppendOpt("recalc", sheet.Recalc)
+                                 .AppendOpt("needsrecalc", sheet.NeedsRecalc)
+                                 .AppendOpt("usermaxcol", sheet.UserMaxCol)
+                                 .AppendOpt("usermaxrow", sheet.UserMaxRow)
+                                 .ToString()
+                },
+
+
+                Format(sheet.BorderStyles, (f, e) => f.Append("border"     , e.Key).Append(e.Value)),
+                Format(sheet.CellFormats , (f, e) => f.Append("cellformat" , e.Key).Append(EncodeForSave(e.Value))),
+                Format(sheet.Colors      , (f, e) => f.Append("color"      , e.Key).Append(e.Value)),
+                Format(sheet.Fonts       , (f, e) => f.Append("font"       , e.Key).Append(e.Value)),
+                Format(sheet.Layouts     , (f, e) => f.Append("layout"     , e.Key).Append(e.Value)),
+                Format(sheet.ValueFormats, (f, e) => f.Append("valueformat", e.Key).Append(EncodeForSave(e.Value))),
+                Format(sheet.Names       , (f, e) => f.Append("name"       , EncodeForSave(e.Name)).Append(EncodeForSave(e.Description)).Append(EncodeForSave(e.Definition))),
+
+                new[]
+                {
+                    !string.IsNullOrEmpty(sheet.CopiedFrom)
+                    ? sheet.CopiedFrom.Split(':', (a, b) => SaveFormatter.New().Append("copiedfrom", a).Append(b).ToString())
+                    : null
+                }
+            }
+            from s in ss
+            where s != null
+            select s;
+
+        static IEnumerable<string> Format<T>(IEnumerable<T> source, Func<SaveFormatter, T, SaveFormatter> builder) =>
+            // ReSharper disable once PossibleMultipleEnumeration
+            Format(source, s => s, builder);
+
+        static IEnumerable<string> Format<T>(IEnumerable<T> source, Func<IEnumerable<T>, IEnumerable<T>> filter, Func<SaveFormatter, T, SaveFormatter> builder) =>
+            from e in filter(source ?? Enumerable.Empty<T>())
+            select builder(SaveFormatter.New(), e).ToString();
+
+        static string EncodeForSave(string s) =>
+            s?.Replace(@"\", @"\b")
+             ?.Replace(":", @"\c")
+             ?.Replace("\n", @"\n");
+
+        struct SaveFormatter
+        {
+            readonly StringBuilder _sb;
+
+            public static SaveFormatter New() => new SaveFormatter(new StringBuilder());
+            public static SaveFormatter New(StringBuilder sb) => new SaveFormatter(sb.Clear());
+
+            public SaveFormatter(StringBuilder sb) { _sb = sb; }
+
+            SaveFormatter Raw(string value)
+            {
+                if (value != null)
+                    _sb.Append(value);
+                return this;
+            }
+
+            public SaveFormatter Append(string value)
+            {
+                if (value != null)
+                    Debug.Assert(value.IndexOfAny(new[] { ':', '\\', '\n' }) < 0);
+                if (_sb.Length > 0)
+                    Raw(":");
+                return Raw(value);
+            }
+
+            public SaveFormatter Append<T>(T value) where T : IFormattable =>
+                Append(value.ToString(null, CultureInfo.InvariantCulture));
+
+            public SaveFormatter Append(string key, string value) =>
+                Append(key).Append(value);
+
+            public SaveFormatter Append(string key, bool value) =>
+                Append(key).Append(value ? "yes" : "no");
+
+            public SaveFormatter Append<T>(string key, T value) where T : IFormattable =>
+                Append(key).Append(value);
+
+            public SaveFormatter AppendOpt(string key, string value) =>
+                string.IsNullOrEmpty(value) ? this : Append(key, value);
+
+            public SaveFormatter AppendOpt(string key, int value) =>
+                value > 0 ? Append(key, value) : this;
+
+            public SaveFormatter AppendOpt(string key, bool value) =>
+                value ? Append(key, true) : this;
+
+            public override string ToString() => _sb.ToString();
+
+            public static implicit operator string(SaveFormatter formatter) => formatter.ToString();
+        }
+
+        static string Format(this Cell cell, string coord)
+        {
+            var sf = new SaveFormatter(new StringBuilder("cell")).Append(coord);
+
+            var str = cell.DataValue as string;
+            var value = str != null
+                      ? EncodeForSave(str)
+                      : string.Format(CultureInfo.InvariantCulture, "{0}", cell.DataValue);
+            if (cell.DataType == CellDataType.Number)
+            {
+                if (cell.ValueType == CellValueType.Number) sf.Append("v", value);
+                else sf.Append("vt", cell.ValueType.SaveCode()).Append(value);
+            }
+            else if (cell.DataType == CellDataType.Text)
+            {
+                if (cell.ValueType == CellValueType.Text) sf.Append("t", value);
+                else sf.Append("vt", cell.ValueType.SaveCode()).Append(value);
+            }
+            else if (cell.DataType != CellDataType.Undefined)
+            {
+                var formula = EncodeForSave(cell.Formula);
+                var vt = cell.DataType == CellDataType.Formula ? "vtf"
+                       : cell.DataType == CellDataType.Constant ? "vtc"
+                       : null;
+                sf.Append(vt, cell.ValueType == CellValueType.Undefined ? string.Empty : cell.ValueType.SaveCode())
+                  .Append(formula).Append(value);
+            }
+
+            if (cell.ReadOnly)
+                sf.Append("ro", "yes");
+
+            sf.AppendOpt("e", cell.Errors);
+
+            if (cell.Bt > 0 || cell.Br > 0 || cell.Bb > 0 || cell.Bl > 0)
+                sf.Append("b").Append(cell.Bt).Append(cell.Br).Append(cell.Bb).Append(cell.Bl);
+
+            return
+                sf.AppendOpt("l", cell.Layout)
+                  .AppendOpt("f", cell.Font)
+                  .AppendOpt("c", cell.Color)
+                  .AppendOpt("bg", cell.BgColor)
+                  .AppendOpt("cf", cell.CellFormat)
+                  .AppendOpt("tvf", cell.TextValueFormat)
+                  .AppendOpt("ntvf", cell.NonTextValueFormat)
+                  .AppendOpt("colspan", cell.ColSpan)
+                  .AppendOpt("rowspan", cell.RowSpan)
+                  .AppendOpt("cssc", cell.Cssc)
+                  .AppendOpt("csss", cell.Csss)
+                  // TODO .AppendOpt("mod", cell.Mod)
+                  .AppendOpt("comment", cell.Comment);
         }
     }
 
@@ -509,7 +688,14 @@ namespace NSocialCalcSave
         Currency,   // n$
         Date,       // nd
         DateTime,   // ndt
-        Error,      // e#...
+        // ReSharper disable once InconsistentNaming
+        ErrorNA,    // e#N/A
+        ErrorNull,  // e#NULL!
+        ErrorNum,   // e#NUM!
+        ErrorDiv0,  // e#DIV/0!
+        ErrorValue, // e#VALUE!
+        ErrorRef,   // e#REF!
+        ErrorName,  // e#NAME?
     }
 
     static class CellValueTypeExtensions
@@ -521,5 +707,38 @@ namespace NSocialCalcSave
             ||  type == CellValueType.Currency
             ||  type == CellValueType.Date
             ||  type == CellValueType.DateTime;
+
+        public static bool IsError(this CellValueType type) =>
+               type == CellValueType.ErrorNA
+            || type == CellValueType.ErrorNull
+            || type == CellValueType.ErrorNum
+            || type == CellValueType.ErrorDiv0
+            || type == CellValueType.ErrorValue
+            || type == CellValueType.ErrorRef
+            || type == CellValueType.ErrorName;
+
+        public static string SaveCode(this CellValueType type)
+        {
+            switch (type)
+            {
+                case CellValueType.Text      : return "t";
+                case CellValueType.Html      : return "th";
+                case CellValueType.Url       : return "tl";
+                case CellValueType.Number    : return "n";
+                case CellValueType.Logical   : return "nl";
+                case CellValueType.Percentage: return "n%";
+                case CellValueType.Currency  : return "n$";
+                case CellValueType.Date      : return "nd";
+                case CellValueType.DateTime  : return "ndt";
+                case CellValueType.ErrorNA   : return "e#N/A";
+                case CellValueType.ErrorNull : return "e#NULL!";
+                case CellValueType.ErrorNum  : return "e#NUM!";
+                case CellValueType.ErrorDiv0 : return "e#DIV/0!";
+                case CellValueType.ErrorValue: return "e#VALUE!";
+                case CellValueType.ErrorRef  : return "e#REF!";
+                case CellValueType.ErrorName : return "e#NAME?";
+                default: throw new ArgumentException(null, nameof(type));
+            }
+        }
     }
 }
