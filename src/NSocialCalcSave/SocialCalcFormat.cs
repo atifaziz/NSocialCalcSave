@@ -110,18 +110,18 @@ namespace NSocialCalcSave
 
         #endregion
 
-        public static Sheet ParseSheetSave(string savedSheet) =>
+        public static ISheet ParseSheetSave(string savedSheet) =>
             ParseSheetSave(savedSheet.SplitIntoLines());
 
-        static Sheet ParseSheetSave(IEnumerable<string> savedSheetLines)
+        static ISheet ParseSheetSave(IEnumerable<string> savedSheetLines)
         {
-            var cells = new List<KeyValuePair<string, Cell>>();
+            var cells = new List<KeyValuePair<string, ICell>>();
 
             var colWidths    = new List<KeyValuePair<string, string>>();
             var colHides     = new List<KeyValuePair<string, bool>>();
             var rowHeights   = new List<KeyValuePair<int, int>>();
             var rowHides     = new List<KeyValuePair<int, bool>>();
-            var names        = new List<NamedRange>();
+            var names        = new List<INamedRange>();
             var layouts      = new List<KeyValuePair<int, string>>();
             var fonts        = new List<KeyValuePair<int, string>>();
             var colors       = new List<KeyValuePair<int, string>>();
@@ -295,7 +295,7 @@ namespace NSocialCalcSave
         static int ParseInt(string s) => int.Parse(s, CultureInfo.InvariantCulture);
         static double ParseNum(string s) => double.Parse(s, CultureInfo.InvariantCulture);
 
-        static Cell ParseCell(IEnumerator<string> token)
+        static ICell ParseCell(IEnumerator<string> token)
         {
             var dataValue          = default(object);
             var dataType           = default(CellDataType);
@@ -490,15 +490,15 @@ namespace NSocialCalcSave
             throw new Exception("Unknown cell value type: " + s);
         }
 
-        public static string Format(this Sheet sheet) =>
+        public static string Format(this ISheet sheet) =>
             string.Join(Environment.NewLine, sheet.FormatCore());
 
-        static IEnumerable<string> FormatCore(this Sheet sheet) =>
+        static IEnumerable<string> FormatCore(this ISheet sheet) =>
             from ss in new[]
             {
                 new[] { "version:1.5" },
 
-                from e in sheet.Cells ?? Enumerable.Empty<KeyValuePair<string, Cell>>()
+                from e in sheet.Cells ?? Enumerable.Empty<KeyValuePair<string, ICell>>()
                 select e.Value.Format(e.Key),
 
                 Format(sheet.ColWidths , (f, e) => f.Append("col", e.Key).Append("w", e.Value)),
@@ -614,7 +614,7 @@ namespace NSocialCalcSave
             public static implicit operator string(SaveFormatter formatter) => formatter.ToString();
         }
 
-        static string Format(this Cell cell, string coord)
+        static string Format(this ICell cell, string coord)
         {
             var sf = new SaveFormatter(new StringBuilder("cell")).Append(coord);
 
