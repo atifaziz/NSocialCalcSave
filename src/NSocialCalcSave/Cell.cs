@@ -16,6 +16,37 @@
 
 namespace NSocialCalcSave
 {
+    public enum CellDataType
+    {
+        Undefined,
+        Text,       // t
+        Number,     // n/v
+        Formula,    // f
+        Constant,   // c = constant that is not a simple number (like "$1.20")
+    }
+
+    public enum CellValueType
+    {
+        Undefined,
+        Text,       // t
+        Html,       // th
+        Url,        // tl
+        Number,     // n
+        Logical,    // nl
+        Percentage, // n%
+        Currency,   // n$
+        Date,       // nd
+        DateTime,   // ndt
+        // ReSharper disable once InconsistentNaming
+        ErrorNA,    // e#N/A
+        ErrorNull,  // e#NULL!
+        ErrorNum,   // e#NUM!
+        ErrorDiv0,  // e#DIV/0!
+        ErrorValue, // e#VALUE!
+        ErrorRef,   // e#REF!
+        ErrorName,  // e#NAME?
+    }
+
     public interface ICell
     {
         object DataValue { get; }
