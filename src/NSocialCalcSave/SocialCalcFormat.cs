@@ -181,7 +181,7 @@ namespace NSocialCalcSave
                         {
                             switch (t)
                             {
-                                case "h": rowHeights.Add(coord.AsKeyTo(ParseInt(pe.Read()))); break;
+                                case "h": rowHeights.Add(coord.AsKeyTo(ParseIntOrBlank(pe.Read()))); break;
                                 case "hide": rowHides.Add(coord.AsKeyTo(IsYes(pe.Read()))); break;
                                 default:
                                     throw new Exception($"Unknown row type item '{t}'");
@@ -195,23 +195,23 @@ namespace NSocialCalcSave
                         {
                             switch (token)
                             {
-                                case "c"          : lastCol = ParseInt(pe.Read()); break;
-                                case "r"          : lastRow = ParseInt(pe.Read()); break;
+                                case "c"          : lastCol = ParseIntOrBlank(pe.Read()); break;
+                                case "r"          : lastRow = ParseIntOrBlank(pe.Read()); break;
                                 case "w"          : defaultColWidth = pe.Read(); break;
-                                case "h"          : defaultRowHeight = ParseInt(pe.Read()); break;
-                                case "tf"         : defaultTextFormat = ParseInt(pe.Read()); break;
-                                case "ntf"        : defaultNonTextFormat = ParseInt(pe.Read()); break;
-                                case "layout"     : defaultLayout = ParseInt(pe.Read()); break;
-                                case "font"       : defaultFont = ParseInt(pe.Read()); break;
-                                case "tvf"        : defaultTextValueFormat = ParseInt(pe.Read()); break;
-                                case "ntvf"       : defaultNonTextValueFormat = ParseInt(pe.Read()); break;
-                                case "color"      : defaultColor = ParseInt(pe.Read()); break;
-                                case "bgcolor"    : defaultBgColor = ParseInt(pe.Read()); break;
+                                case "h"          : defaultRowHeight = ParseIntOrBlank(pe.Read()); break;
+                                case "tf"         : defaultTextFormat = ParseIntOrBlank(pe.Read()); break;
+                                case "ntf"        : defaultNonTextFormat = ParseIntOrBlank(pe.Read()); break;
+                                case "layout"     : defaultLayout = ParseIntOrBlank(pe.Read()); break;
+                                case "font"       : defaultFont = ParseIntOrBlank(pe.Read()); break;
+                                case "tvf"        : defaultTextValueFormat = ParseIntOrBlank(pe.Read()); break;
+                                case "ntvf"       : defaultNonTextValueFormat = ParseIntOrBlank(pe.Read()); break;
+                                case "color"      : defaultColor = ParseIntOrBlank(pe.Read()); break;
+                                case "bgcolor"    : defaultBgColor = ParseIntOrBlank(pe.Read()); break;
                                 case "circularreferencecell": circularReferenceCell = pe.Read(); break;
                                 case "recalc"     : recalc = pe.Read(); break;
                                 case "needsrecalc": needsRecalc = IsYes(pe.Read()); break;
-                                case "usermaxcol" : userMaxCol = ParseInt(pe.Read()); break;
-                                case "usermaxrow" : userMaxRow = ParseInt(pe.Read()); break;
+                                case "usermaxcol" : userMaxCol = ParseIntOrBlank(pe.Read()); break;
+                                case "usermaxrow" : userMaxRow = ParseIntOrBlank(pe.Read()); break;
                                 default: throw new Exception($"Unknown sheet attribute type item '{token}'");
                             }
                         }
@@ -292,8 +292,17 @@ namespace NSocialCalcSave
         // and fills in cell assuming save format.
         //
 
-        static int ParseInt(string s) => int.Parse(s, CultureInfo.InvariantCulture);
-        static double ParseNum(string s) => double.Parse(s, CultureInfo.InvariantCulture);
+        static int ParseInt(string s) =>
+            int.Parse(s, CultureInfo.InvariantCulture);
+
+        static int ParseIntOrBlank(string s, int blank = 0) =>
+            string.IsNullOrWhiteSpace(s) ? blank : ParseInt(s);
+
+        static double ParseNum(string s) =>
+            double.Parse(s, CultureInfo.InvariantCulture);
+
+        static double ParseNumOrBlank(string s, double blank = 0) =>
+            string.IsNullOrWhiteSpace(s) ? blank : ParseNum(s);
 
         static ICell ParseCell(IEnumerator<string> token)
         {
@@ -328,7 +337,7 @@ namespace NSocialCalcSave
                     // cell:coord:type:value...:type:value... - Types are as follows:
                     // v:value - straight numeric value
                     case "v":
-                        dataValue = ParseNum(token.Read());
+                        dataValue = ParseNumOrBlank(token.Read());
                         dataType = CellDataType.Number;
                         valueType = CellValueType.Number;
                         break;
@@ -343,7 +352,7 @@ namespace NSocialCalcSave
                         if ((valueType = ParseCellValueType(token.Read())).IsNumeric())
                         {
                             dataType = CellDataType.Number;
-                            dataValue = ParseNum(token.Read());
+                            dataValue = ParseNumOrBlank(token.Read());
                         }
                         else
                         {
@@ -357,7 +366,7 @@ namespace NSocialCalcSave
                     case "vtf":
                     case "vtc":
                         dataValue = (valueType = ParseCellValueType(token.Read())).IsNumeric()
-                                  ? (valueType == CellValueType.Logical ? ParseInt(token.Read()) != 0 : (object)ParseNum(token.Read()))
+                                  ? (valueType == CellValueType.Logical ? ParseIntOrBlank(token.Read()) != 0 : (object)ParseNumOrBlank(token.Read()))
                                   : DecodeFromSave(token.Read());
                         formula = DecodeFromSave(token.Read());
                         var vtt = type[2];
@@ -369,29 +378,29 @@ namespace NSocialCalcSave
                     case "e": errors = DecodeFromSave(token.Read()); break;
                     // b:topborder#:rightborder#:bottomborder#:leftborder# - border# in sheet border list or blank if none
                     case "b":
-                        bt = ParseInt(token.Read());
-                        br = ParseInt(token.Read());
-                        bb = ParseInt(token.Read());
-                        bl = ParseInt(token.Read());
+                        bt = ParseIntOrBlank(token.Read());
+                        br = ParseIntOrBlank(token.Read());
+                        bb = ParseIntOrBlank(token.Read());
+                        bl = ParseIntOrBlank(token.Read());
                         break;
                     // l:layout# - number in cell layout list
-                    case "l": layout = ParseInt(token.Read()); break;
+                    case "l": layout = ParseIntOrBlank(token.Read()); break;
                     // f:font# - number in sheet fonts list
-                    case "f": font = ParseInt(token.Read()); break;
+                    case "f": font = ParseIntOrBlank(token.Read()); break;
                     // c:color# - sheet color list index for text
-                    case "c": color = ParseInt(token.Read()); break;
+                    case "c": color = ParseIntOrBlank(token.Read()); break;
                     // bg:color# - sheet color list index for background color
-                    case "bg": bgcolor = ParseInt(token.Read()); break;
+                    case "bg": bgcolor = ParseIntOrBlank(token.Read()); break;
                     // cf:format# - sheet cell format number for explicit format (align:left, etc.)
-                    case "cf": cellFormat = ParseInt(token.Read()); break;
+                    case "cf": cellFormat = ParseIntOrBlank(token.Read()); break;
                     // ntvf:valueformat# - sheet cell non-text value format number
-                    case "ntvf": nonTextValueFormat = ParseInt(token.Read()); break;
+                    case "ntvf": nonTextValueFormat = ParseIntOrBlank(token.Read()); break;
                     // tvf:valueformat# - sheet cell text value format number
-                    case "tvf": textValueFormat = ParseInt(token.Read()); break;
+                    case "tvf": textValueFormat = ParseIntOrBlank(token.Read()); break;
                     // colspan:numcols - number of columns spanned in merged cell
-                    case "colspan": colspan = ParseInt(token.Read()); break;
+                    case "colspan": colspan = ParseIntOrBlank(token.Read()); break;
                     // rowspan:numrows - number of rows spanned in merged cell
-                    case "rowspan": rowspan = ParseInt(token.Read()); break;
+                    case "rowspan": rowspan = ParseIntOrBlank(token.Read()); break;
                     // cssc:classname - name of CSS class to be used for cell when published instead of one calculated here
                     case "cssc": cssc = token.Read(); break;
                     // csss:styletext - explicit CSS style information, encoded to handle :, etc.
