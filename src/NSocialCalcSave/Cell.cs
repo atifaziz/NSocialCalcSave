@@ -36,6 +36,7 @@ namespace NSocialCalcSave
         Percentage, // n%
         Currency,   // n$
         Date,       // nd
+        Time,       // nt
         DateTime,   // ndt
         // ReSharper disable once InconsistentNaming
         ErrorNA,    // e#N/A

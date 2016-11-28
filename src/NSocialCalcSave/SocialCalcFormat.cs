@@ -461,6 +461,7 @@ namespace NSocialCalcSave
                         case '%': return CellValueType.Percentage;
                         case '$': return CellValueType.Currency;
                         case 'l': return CellValueType.Logical;
+                        case 't': return CellValueType.Time;
                         case 'd':
                             switch (s.Length)
                             {
@@ -679,12 +680,13 @@ namespace NSocialCalcSave
     static class CellValueTypeExtensions
     {
         public static bool IsNumeric(this CellValueType type) =>
-                type == CellValueType.Number
-            ||  type == CellValueType.Logical
-            ||  type == CellValueType.Percentage
-            ||  type == CellValueType.Currency
-            ||  type == CellValueType.Date
-            ||  type == CellValueType.DateTime;
+               type == CellValueType.Number
+            || type == CellValueType.Logical
+            || type == CellValueType.Percentage
+            || type == CellValueType.Currency
+            || type == CellValueType.Date
+            || type == CellValueType.Time
+            || type == CellValueType.DateTime;
 
         public static bool IsError(this CellValueType type) =>
                type == CellValueType.ErrorNA
@@ -707,6 +709,7 @@ namespace NSocialCalcSave
                 case CellValueType.Percentage: return "n%";
                 case CellValueType.Currency  : return "n$";
                 case CellValueType.Date      : return "nd";
+                case CellValueType.Time      : return "nt";
                 case CellValueType.DateTime  : return "ndt";
                 case CellValueType.ErrorNA   : return "e#N/A";
                 case CellValueType.ErrorNull : return "e#NULL!";
