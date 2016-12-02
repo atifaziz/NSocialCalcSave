@@ -10,7 +10,7 @@
     "projectUrl": "https://github.com/atifaziz/NSocialCalcSave",
     "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
     "owners": [ "Atif Aziz" ],
-    "tags": [ "excel", "socialcalc", "sheet" ]
+    "tags": [ "excel", "socialcalc", "sheet", "spreadsheet" ]
   },
 
   "dependencies": {
