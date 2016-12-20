@@ -11,9 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		pack.cmd = pack.cmd
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0B6023C0-EAA8-4FC2-9086-EEAAEA5DAEAA}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "NSocialCalcSave", "src\NSocialCalcSave\NSocialCalcSave.xproj", "{2FDDFC02-8D18-4E5D-B76C-58E3AB6403A8}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "NSocialCalcSave", "NSocialCalcSave\NSocialCalcSave.xproj", "{2FDDFC02-8D18-4E5D-B76C-58E3AB6403A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,8 +26,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{2FDDFC02-8D18-4E5D-B76C-58E3AB6403A8} = {0B6023C0-EAA8-4FC2-9086-EEAAEA5DAEAA}
 	EndGlobalSection
 EndGlobal
