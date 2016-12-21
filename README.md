@@ -214,7 +214,7 @@ NSocialCalcSave does not validate the integrity of the sheet. This is left as
 the responsibility of the caller of `SocialCalcFormat.Format`.
 
 
-[builds]: https://ci.appveyor.com/project/raboof/a1
+[builds]: https://ci.appveyor.com/project/raboof/nsocialcalcsave
 [build-badge]: https://img.shields.io/appveyor/ci/raboof/nsocialcalcsave.svg
 [myget-badge]: https://img.shields.io/myget/raboof/v/NSocialCalcSave.svg?label=myget
 [edge-pkgs]: https://www.myget.org/feed/raboof/package/nuget/NSocialCalcSave
