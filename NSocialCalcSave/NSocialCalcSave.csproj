@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <VersionPrefix>1.0.1</VersionPrefix>
+    <Description>Library for parsing and writing SocialCalc sheet save format.</Description>
+    <Copyright>Copyright © 2016 Atif Aziz. Portions Copyright © 2008, 2009, 2010 Socialtext, Inc.</Copyright>
+    <Authors>Atif Aziz</Authors>
+    <AssemblyName>NSocialCalcSave</AssemblyName>
+    <PackageId>NSocialCalcSave</PackageId>
+    <PackageTags>excel;socialcalc;sheet;spreadsheet</PackageTags>
+    <PackageProjectUrl>https://github.com/atifaziz/NSocialCalcSave</PackageProjectUrl>
+    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+  </PropertyGroup>
+
+</Project>
