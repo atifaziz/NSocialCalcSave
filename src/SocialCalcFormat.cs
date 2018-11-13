@@ -29,6 +29,36 @@ namespace NSocialCalcSave
 
     #endregion
 
+    public interface ISheetBuilder<out T>
+    {
+        T GetSheet();
+
+        void ParseCell(
+            string address,
+            object dataValue,
+            CellDataType dataType,
+            CellValueType valueType,
+            string formula,
+            bool readOnly,
+            string errors,
+            int bt,
+            int br,
+            int bb,
+            int bl,
+            int layout,
+            int font,
+            int color,
+            int bgcolor,
+            int cellFormat,
+            int nonTextValueFormat,
+            int textValueFormat,
+            int colspan,
+            int rowspan,
+            string cssc,
+            string csss,
+            string comment);
+    }
+
     public static class SocialCalcFormat
     {
         #region Sheet Save Format
@@ -113,10 +143,8 @@ namespace NSocialCalcSave
         public static ISheet ParseSheetSave(string savedSheet) =>
             ParseSheetSave(savedSheet.SplitIntoLines());
 
-        static ISheet ParseSheetSave(IEnumerable<string> savedSheetLines)
+        static T ParseSheetSave<T>(IEnumerable<string> savedSheetLines, ISheetBuilder<T> builder)
         {
-            var cells = new List<KeyValuePair<string, ICell>>();
-
             var colWidths    = new List<KeyValuePair<string, string>>();
             var colHides     = new List<KeyValuePair<string, bool>>();
             var rowHeights   = new List<KeyValuePair<int, int>>();
@@ -156,8 +184,53 @@ namespace NSocialCalcSave
                 {
                     case "cell":
                     {
-                        var cell = pe.Read();
-                        cells.Add(cell.AsKeyTo(ParseCell(pe)));
+                        var address = pe.Read();
+                        ParseCell(pe,
+                            out var dataValue         ,
+                            out var dataType          ,
+                            out var valueType         ,
+                            out var formula           ,
+                            out var readOnly          ,
+                            out var errors            ,
+                            out var bt                ,
+                            out var br                ,
+                            out var bb                ,
+                            out var bl                ,
+                            out var layout            ,
+                            out var font              ,
+                            out var color             ,
+                            out var bgcolor           ,
+                            out var cellFormat        ,
+                            out var nonTextValueFormat,
+                            out var textValueFormat   ,
+                            out var colspan           ,
+                            out var rowspan           ,
+                            out var cssc              ,
+                            out var csss              ,
+                            out var comment           );
+                        builder.ParseCell(address,
+                            dataValue         ,
+                            dataType          ,
+                            valueType         ,
+                            formula           ,
+                            readOnly          ,
+                            errors            ,
+                            bt                ,
+                            br                ,
+                            bb                ,
+                            bl                ,
+                            layout            ,
+                            font              ,
+                            color             ,
+                            bgcolor           ,
+                            cellFormat        ,
+                            nonTextValueFormat,
+                            textValueFormat   ,
+                            colspan           ,
+                            rowspan           ,
+                            cssc              ,
+                            csss              ,
+                            comment           );
                         break;
                     }
                     case "col":
@@ -304,30 +377,52 @@ namespace NSocialCalcSave
         static double ParseNumOrBlank(string s, double blank = 0) =>
             string.IsNullOrWhiteSpace(s) ? blank : ParseNum(s);
 
-        static ICell ParseCell(IEnumerator<string> token)
+        static void ParseCell(IEnumerator<string> token,
+            out object dataValue,
+            out CellDataType dataType,
+            out CellValueType valueType,
+            out string formula,
+            out bool readOnly,
+            out string errors,
+            out int bt,
+            out int br,
+            out int bb,
+            out int bl,
+            out int layout,
+            out int font,
+            out int color,
+            out int bgcolor,
+            out int cellFormat,
+            out int nonTextValueFormat,
+            out int textValueFormat,
+            out int colspan,
+            out int rowspan,
+            out string cssc,
+            out string csss,
+            out string comment)
         {
-            var dataValue          = default(object);
-            var dataType           = default(CellDataType);
-            var valueType         = default(CellValueType);
-            var formula            = default(string);
-            var readOnly           = default(bool);
-            var errors             = default(string);
-            var bt                 = default(int);
-            var br                 = default(int);
-            var bb                 = default(int);
-            var bl                 = default(int);
-            var layout             = default(int);
-            var font               = default(int);
-            var color              = default(int);
-            var bgcolor            = default(int);
-            var cellFormat         = default(int);
-            var nonTextValueFormat = default(int);
-            var textValueFormat    = default(int);
-            var colspan            = default(int);
-            var rowspan            = default(int);
-            var cssc               = default(string);
-            var csss               = default(string);
-            var comment            = default(string);
+            dataValue          = default(object);
+            dataType           = default(CellDataType);
+            valueType         = default(CellValueType);
+            formula            = default(string);
+            readOnly           = default(bool);
+            errors             = default(string);
+            bt                 = default(int);
+            br                 = default(int);
+            bb                 = default(int);
+            bl                 = default(int);
+            layout             = default(int);
+            font               = default(int);
+            color              = default(int);
+            bgcolor            = default(int);
+            cellFormat         = default(int);
+            nonTextValueFormat = default(int);
+            textValueFormat    = default(int);
+            colspan            = default(int);
+            rowspan            = default(int);
+            cssc               = default(string);
+            csss               = default(string);
+            comment            = default(string);
 
             while (token.MoveNext())
             {
@@ -416,32 +511,6 @@ namespace NSocialCalcSave
                         throw new Exception($"Unknown cell type item '{type}'");
                 }
             }
-
-            return new Cell
-            {
-                DataValue          = dataValue,
-                DataType           = dataType,
-                ValueType          = valueType,
-                Formula            = formula,
-                ReadOnly           = readOnly,
-                Errors             = errors,
-                Bt                 = bt,
-                Br                 = br,
-                Bb                 = bb,
-                Bl                 = bl,
-                Layout             = layout,
-                Font               = font,
-                Color              = color,
-                BgColor            = bgcolor,
-                CellFormat         = cellFormat,
-                NonTextValueFormat = nonTextValueFormat,
-                TextValueFormat    = textValueFormat,
-                ColSpan            = colspan,
-                RowSpan            = rowspan,
-                Cssc               = cssc,
-                Csss               = csss,
-                Comment            = comment,
-            };
         }
 
         static bool IsYes(string s) => "yes".Equals(s, StringComparison.OrdinalIgnoreCase);
