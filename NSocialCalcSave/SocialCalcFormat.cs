@@ -628,8 +628,7 @@ namespace NSocialCalcSave
         {
             var sf = new SaveFormatter(new StringBuilder("cell")).Append(coord);
 
-            var str = cell.DataValue as string;
-            var value = str != null
+            var value = cell.DataValue is string str
                       ? EncodeForSave(str)
                       : string.Format(CultureInfo.InvariantCulture, "{0}", cell.DataValue);
             if (cell.DataType == CellDataType.Number)
