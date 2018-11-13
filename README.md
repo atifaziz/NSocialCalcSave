@@ -9,7 +9,7 @@ formatting the &ldquo;SocialCalc sheet save&rdquo; format,
 a.k.a. `text/x-socialcalc`.
 
 SocialCalc is part of the Socialtext platform, a suite of social collaboration
-tools for enterprise users. For background on SocialCalc, see [Chapter 
+tools for enterprise users. For background on SocialCalc, see [Chapter
 19][aosa-19] of [The Architecture of Open Source Applications][aosa] book and
 particularly section 19.5 for a brief introduction to the format.
 
@@ -162,21 +162,21 @@ foreach (var cell in s.Cells)
 The output would be:
 
 ```
-A1 | t = Text    | vt = Text    : Annual Interest Rate = 
-B1 | t = Text    | vt = Text    : Years = 
-C1 | t = Text    | vt = Text    : Amount = 
-D1 | t = Text    | vt = Text    : Monthly Payment = 
-A2 | t = Number  | vt = Number  : 0.06 = 
-B2 | t = Number  | vt = Number  : 20 = 
-C2 | t = Number  | vt = Number  : 150000 = 
+A1 | t = Text    | vt = Text    : Annual Interest Rate =
+B1 | t = Text    | vt = Text    : Years =
+C1 | t = Text    | vt = Text    : Amount =
+D1 | t = Text    | vt = Text    : Monthly Payment =
+A2 | t = Number  | vt = Number  : 0.06 =
+B2 | t = Number  | vt = Number  : 20 =
+C2 | t = Number  | vt = Number  : 150000 =
 D2 | t = Formula | vt = Currency: -1074.64658771726 = PMT(A2/12,B2*12,C2)
-A3 | t = Number  | vt = Number  : 0.06 = 
-B3 | t = Number  | vt = Number  : 25 = 
-C3 | t = Number  | vt = Number  : 150000 = 
+A3 | t = Number  | vt = Number  : 0.06 =
+B3 | t = Number  | vt = Number  : 25 =
+C3 | t = Number  | vt = Number  : 150000 =
 D3 | t = Formula | vt = Currency: -966.452102228276 = PMT(A3/12,B3*12,C3)
-A4 | t = Number  | vt = Number  : 0.06 = 
-B4 | t = Number  | vt = Number  : 30 = 
-C4 | t = Number  | vt = Number  : 150000 = 
+A4 | t = Number  | vt = Number  : 0.06 =
+B4 | t = Number  | vt = Number  : 30 =
+C4 | t = Number  | vt = Number  : 150000 =
 D4 | t = Formula | vt = Currency: -899.325787729138 = PMT(A4/12,B4*12,C4)
 ```
 
@@ -203,7 +203,7 @@ var s = SocialCalcFormat.Format(new Sheet
         {
             DataType = CellDataType.Number,
             ValueType = CellValueType.Number,
-            DataValue = Math.PI 
+            DataValue = Math.PI
         }),
     }
 });

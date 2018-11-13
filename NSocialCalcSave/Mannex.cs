@@ -86,7 +86,7 @@ namespace Mannex
     static partial class StringExtensions
     {
         /// <summary>
-        /// Splits string into lines where a line is terminated 
+        /// Splits string into lines where a line is terminated
         /// by CR and LF, or just CR or just LF.
         /// </summary>
         /// <remarks>
@@ -98,7 +98,7 @@ namespace Mannex
             if (str == null) throw new ArgumentNullException("str");
             return SplitIntoLinesImpl(str);
         }
- 
+
         static IEnumerable<string> SplitIntoLinesImpl(string str)
         {
             using (var reader = str.Read())
@@ -108,7 +108,7 @@ namespace Mannex
         }
 
         /// <summary>
-        /// Splits a string into a pair using a specified character to 
+        /// Splits a string into a pair using a specified character to
         /// separate the two.
         /// </summary>
         /// <remarks>
@@ -214,7 +214,7 @@ namespace Mannex.Collections.Generic
     using System.Collections.Generic;
 
     /// <summary>
-    /// Extension methods for pairing keys and values as 
+    /// Extension methods for pairing keys and values as
     /// <see cref="KeyValuePair{TKey,TValue}"/>.
     /// </summary>
 
