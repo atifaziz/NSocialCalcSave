@@ -23,5 +23,5 @@ if not exist "%DOTNETEXE%" (
 goto :EOF
 
 :build
-"%DOTNETEXE%" build -c %1 NSocialCalcSave
+"%DOTNETEXE%" build --no-restore -c %1 NSocialCalcSave
 goto :EOF
