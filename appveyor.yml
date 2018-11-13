@@ -2,6 +2,10 @@ version: '{build}'
 branches:
   only:
   - master
+skip_commits:
+  files:
+    - '*.md'
+    - '*.txt'
 skip_tags: true
 install:
 build_script:
