@@ -11,6 +11,7 @@
     <PackageTags>excel;socialcalc;sheet;spreadsheet</PackageTags>
     <PackageProjectUrl>https://github.com/atifaziz/NSocialCalcSave</PackageProjectUrl>
     <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <PackageOutputPath>..\dist</PackageOutputPath>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
