@@ -3,4 +3,4 @@
 VERSION_SUFFIX=
 if [ ! -z "$1" ]; then VERSION_SUFFIX="--version-suffix $1"; fi
 ./build.sh \
-&& dotnet pack --no-restore -c Release $VERSION_SUFFIX NSocialCalcSave
+&& dotnet pack --no-restore -c Release $VERSION_SUFFIX
