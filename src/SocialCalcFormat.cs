@@ -648,7 +648,7 @@ namespace NSocialCalcSave
                        : cell.DataType == CellDataType.Constant ? "vtc"
                        : null;
                 sf.Append(vt, cell.ValueType == CellValueType.Undefined ? string.Empty : cell.ValueType.SaveCode())
-                  .Append(formula).Append(value);
+                  .Append(value).Append(formula);
             }
 
             if (cell.ReadOnly)
