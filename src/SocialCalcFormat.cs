@@ -29,6 +29,49 @@ namespace NSocialCalcSave
 
     #endregion
 
+    struct Token<T>
+    {
+        readonly T _value;
+
+        public Token(T value, StringSpan span)
+        {
+            _value = value;
+            Span = span;
+        }
+
+        public T Value => typeof(T) == typeof(string) ? (T)(object)Span.ToString() : _value;
+        public StringSpan Span { get; }
+    }
+
+    interface ISheetBuilder
+    {
+        void AddCell(
+            int row,
+            int col,
+            object dataValue,
+            CellDataType dataType,
+            CellValueType valueType,
+            string formula,
+            bool readOnly,
+            string errors,
+            int bt,
+            int br,
+            int bb,
+            int bl,
+            int layout,
+            int font,
+            int color,
+            int bgcolor,
+            int cellFormat,
+            int nonTextValueFormat,
+            int textValueFormat,
+            int colspan,
+            int rowspan,
+            string cssc,
+            string csss,
+            string comment);
+    }
+
     public static class SocialCalcFormat
     {
         #region Sheet Save Format
@@ -111,9 +154,9 @@ namespace NSocialCalcSave
         #endregion
 
         public static ISheet ParseSheetSave(string savedSheet) =>
-            ParseSheetSave(savedSheet.SplitIntoLines());
+            ParseSheetSave(new StringSpan(savedSheet).SplitIntoLines());
 
-        static ISheet ParseSheetSave(IEnumerable<string> savedSheetLines)
+        static ISheet ParseSheetSave(IEnumerable<StringSpan> savedSheetLines)
         {
             var cells = new List<KeyValuePair<string, ICell>>();
 
@@ -152,94 +195,125 @@ namespace NSocialCalcSave
             foreach (var parts in from line in savedSheetLines select line.Split(':'))
             {
                 var pe = parts.AsEnumerable().GetEnumerator();
-                switch (pe.Read())
+                if (pe.Read() == "cell")
                 {
-                    case "cell":
+                    string cell = pe.Read();
+                    cells.Add(cell.AsKeyTo(ParseCell(pe)));
+                }
+                else if (pe.Read() == "col")
+                {
+                    var coord = pe.Read();
+                    for (var token = pe.TryRead(); token != null; token = pe.TryRead())
                     {
-                        var cell = pe.Read();
-                        cells.Add(cell.AsKeyTo(ParseCell(pe)));
-                        break;
+                        if (token == "w")
+                            colWidths.Add(((string) coord).AsKeyTo((string) pe.Read()));
+                        else if (token == "hide")
+                            colHides.Add(((string) coord).AsKeyTo(IsYes(pe.Read())));
+                        else
+                            throw new Exception($"Unknown col type item '{token}'");
                     }
-                    case "col":
+                }
+                else if (pe.Read() == "row")
+                {
+                    var coord = ParseInt(pe.Read());
+                    for (var t = pe.TryRead(); t != null; t = pe.TryRead())
                     {
-                        var coord = pe.Read();
-                        for (var token = pe.TryRead(); token != null; token = pe.TryRead())
-                        {
-                            switch (token)
-                            {
-                                case "w": colWidths.Add(coord.AsKeyTo(pe.Read())); break; // must be text - could be auto or %, etc.
-                                case "hide": colHides.Add(coord.AsKeyTo(IsYes(pe.Read()))); break;
-                                default: throw new Exception($"Unknown col type item '{token}'");
-                            }
-                        }
-                        break;
+                        if (t == "h")
+                            rowHeights.Add(coord.AsKeyTo(ParseIntOrBlank(pe.Read())));
+                        else if (t == "hide")
+                            rowHides.Add(coord.AsKeyTo(IsYes(pe.Read())));
+                        else
+                            throw new Exception($"Unknown row type item '{t}'");
                     }
-                    case "row":
+                }
+                else if (pe.Read() == "sheet")
+                {
+                    for (var token = pe.TryRead(); token != null; token = pe.TryRead())
                     {
-                        var coord = ParseInt(pe.Read());
-                        for (var t = pe.TryRead(); t != null; t = pe.TryRead())
-                        {
-                            switch (t)
-                            {
-                                case "h": rowHeights.Add(coord.AsKeyTo(ParseIntOrBlank(pe.Read()))); break;
-                                case "hide": rowHides.Add(coord.AsKeyTo(IsYes(pe.Read()))); break;
-                                default:
-                                    throw new Exception($"Unknown row type item '{t}'");
-                            }
-                        }
-                        break;
+                        if (token == "c")
+                            lastCol = ParseIntOrBlank(pe.Read());
+                        else if (token == "r")
+                            lastRow = ParseIntOrBlank(pe.Read());
+                        else if (token == "w")
+                            defaultColWidth = pe.Read();
+                        else if (token == "h")
+                            defaultRowHeight = ParseIntOrBlank(pe.Read());
+                        else if (token == "tf")
+                            defaultTextFormat = ParseIntOrBlank(pe.Read());
+                        else if (token == "ntf")
+                            defaultNonTextFormat = ParseIntOrBlank(pe.Read());
+                        else if (token == "layout")
+                            defaultLayout = ParseIntOrBlank(pe.Read());
+                        else if (token == "font")
+                            defaultFont = ParseIntOrBlank(pe.Read());
+                        else if (token == "tvf")
+                            defaultTextValueFormat = ParseIntOrBlank(pe.Read());
+                        else if (token == "ntvf")
+                            defaultNonTextValueFormat = ParseIntOrBlank(pe.Read());
+                        else if (token == "color")
+                            defaultColor = ParseIntOrBlank(pe.Read());
+                        else if (token == "bgcolor")
+                            defaultBgColor = ParseIntOrBlank(pe.Read());
+                        else if (token == "circularreferencecell")
+                            circularReferenceCell = pe.Read();
+                        else if (token == "recalc")
+                            recalc = pe.Read();
+                        else if (token == "needsrecalc")
+                            needsRecalc = IsYes(pe.Read());
+                        else if (token == "usermaxcol")
+                            userMaxCol = ParseIntOrBlank(pe.Read());
+                        else if (token == "usermaxrow")
+                            userMaxRow = ParseIntOrBlank(pe.Read());
+                        else
+                            throw new Exception($"Unknown sheet attribute type item '{token}'");
                     }
-                    case "sheet":
+                }
+                else if (pe.Read() == "name")
+                {
+                    names.Add(new NamedRange
                     {
-                        for (var token = pe.TryRead(); token != null; token = pe.TryRead())
-                        {
-                            switch (token)
-                            {
-                                case "c"          : lastCol = ParseIntOrBlank(pe.Read()); break;
-                                case "r"          : lastRow = ParseIntOrBlank(pe.Read()); break;
-                                case "w"          : defaultColWidth = pe.Read(); break;
-                                case "h"          : defaultRowHeight = ParseIntOrBlank(pe.Read()); break;
-                                case "tf"         : defaultTextFormat = ParseIntOrBlank(pe.Read()); break;
-                                case "ntf"        : defaultNonTextFormat = ParseIntOrBlank(pe.Read()); break;
-                                case "layout"     : defaultLayout = ParseIntOrBlank(pe.Read()); break;
-                                case "font"       : defaultFont = ParseIntOrBlank(pe.Read()); break;
-                                case "tvf"        : defaultTextValueFormat = ParseIntOrBlank(pe.Read()); break;
-                                case "ntvf"       : defaultNonTextValueFormat = ParseIntOrBlank(pe.Read()); break;
-                                case "color"      : defaultColor = ParseIntOrBlank(pe.Read()); break;
-                                case "bgcolor"    : defaultBgColor = ParseIntOrBlank(pe.Read()); break;
-                                case "circularreferencecell": circularReferenceCell = pe.Read(); break;
-                                case "recalc"     : recalc = pe.Read(); break;
-                                case "needsrecalc": needsRecalc = IsYes(pe.Read()); break;
-                                case "usermaxcol" : userMaxCol = ParseIntOrBlank(pe.Read()); break;
-                                case "usermaxrow" : userMaxRow = ParseIntOrBlank(pe.Read()); break;
-                                default: throw new Exception($"Unknown sheet attribute type item '{token}'");
-                            }
-                        }
-                        break;
-                    }
-                    case "name"       : names.Add(new NamedRange
-                                        {
-                                            Name        = DecodeFromSave(pe.Read()).ToUpperInvariant(),
-                                            Description = DecodeFromSave(pe.Read()),
-                                            Definition  = DecodeFromSave(pe.Read())
-                                        });
-                                        break;
-                    case "layout"     : layouts.Add(ParseInt(pe.Read()).AsKeyTo(string.Join(":", parts.Skip(2)) /* layouts can have ":" in them */)); break;
-                    case "font"       : fonts.Add(ParseInt(pe.Read()).AsKeyTo(pe.Read())); break;
-                    case "color"      : colors.Add(ParseInt(pe.Read()).AsKeyTo(pe.Read())); break;
-                    case "border"     : borderStyles.Add(ParseInt(pe.Read()).AsKeyTo(pe.Read())); break;
-                    case "cellformat" : cellFormats.Add(ParseInt(pe.Read()).AsKeyTo(DecodeFromSave(pe.Read()))); break;
-                    case "valueformat": valueFormats.Add(ParseInt(pe.Read()).AsKeyTo(DecodeFromSave(pe.Read()))); break;
-                    case "copiedfrom" : copiedFrom = pe.Read() + ":" + pe.Read(); break;
-
-                    case "":
-                    case "version":
-                    case "clipboardrange": // in save versions up to 1.3. Ignored.
-                    case "clipboard":
-                        break;
-
-                    default:
-                        throw new Exception($"Unknown line type '{pe.Current}'");
+                        Name = DecodeFromSave(pe.Read()).ToUpperInvariant(),
+                        Description = DecodeFromSave(pe.Read()),
+                        Definition = DecodeFromSave(pe.Read())
+                    });
+                }
+                else if (pe.Read() == "layout")
+                {
+                    layouts.Add(ParseInt(pe.Read())
+                                    .AsKeyTo(
+                                        string.Join(
+                                            ":",
+                                            parts.Skip(2)) /* layouts can have ":" in them */));
+                }
+                else if (pe.Read() == "font")
+                {
+                    fonts.Add(ParseInt(pe.Read()).AsKeyTo((string) pe.Read()));
+                }
+                else if (pe.Read() == "color")
+                {
+                    colors.Add(ParseInt(pe.Read()).AsKeyTo((string) pe.Read()));
+                }
+                else if (pe.Read() == "border")
+                {
+                    borderStyles.Add(ParseInt(pe.Read()).AsKeyTo((string) pe.Read()));
+                }
+                else if (pe.Read() == "cellformat")
+                {
+                    cellFormats.Add(ParseInt(pe.Read()).AsKeyTo(DecodeFromSave(pe.Read())));
+                }
+                else if (pe.Read() == "valueformat")
+                {
+                    valueFormats.Add(ParseInt(pe.Read()).AsKeyTo(DecodeFromSave(pe.Read())));
+                }
+                else if (pe.Read() == "copiedfrom")
+                {
+                    copiedFrom = pe.Read() + ":" + pe.Read();
+                }
+                else if (pe.Read() == "" || pe.Read() == "version" ||
+                         pe.Read() == "clipboardrange" || pe.Read() == "clipboard") { }
+                else
+                {
+                    throw new Exception($"Unknown line type '{pe.Current}'");
                 }
             }
 
@@ -292,19 +366,31 @@ namespace NSocialCalcSave
         // and fills in cell assuming save format.
         //
 
+        static int ParseInt(StringSpan s) =>
+            ParseInt(s.ToString());
+
+        [Obsolete]
         static int ParseInt(string s) =>
             int.Parse(s, CultureInfo.InvariantCulture);
 
+        static int ParseIntOrBlank(StringSpan s, int blank = 0) =>
+            ParseIntOrBlank(s.ToString(), blank);
+
+        [Obsolete]
         static int ParseIntOrBlank(string s, int blank = 0) =>
             string.IsNullOrWhiteSpace(s) ? blank : ParseInt(s);
 
+        static double ParseNum(StringSpan s) =>
+            ParseNum(s);
+
+        [Obsolete]
         static double ParseNum(string s) =>
             double.Parse(s, CultureInfo.InvariantCulture);
 
         static double ParseNumOrBlank(string s, double blank = 0) =>
             string.IsNullOrWhiteSpace(s) ? blank : ParseNum(s);
 
-        static ICell ParseCell(IEnumerator<string> token)
+        static void ParseCell(IEnumerator<StringSpan> token, ISheetBuilder sb)
         {
             var dataValue          = default(object);
             var dataType           = default(CellDataType);
@@ -417,31 +503,33 @@ namespace NSocialCalcSave
                 }
             }
 
-            return new Cell
-            {
-                DataValue          = dataValue,
-                DataType           = dataType,
-                ValueType          = valueType,
-                Formula            = formula,
-                ReadOnly           = readOnly,
-                Errors             = errors,
-                Bt                 = bt,
-                Br                 = br,
-                Bb                 = bb,
-                Bl                 = bl,
-                Layout             = layout,
-                Font               = font,
-                Color              = color,
-                BgColor            = bgcolor,
-                CellFormat         = cellFormat,
-                NonTextValueFormat = nonTextValueFormat,
-                TextValueFormat    = textValueFormat,
-                ColSpan            = colspan,
-                RowSpan            = rowspan,
-                Cssc               = cssc,
-                Csss               = csss,
-                Comment            = comment,
-            };
+            sb.AddCell
+            (
+                0,
+                0,
+                dataValue,
+                dataType,
+                valueType,
+                formula,
+                readOnly,
+                errors,
+                bt,
+                br,
+                bb,
+                bl,
+                layout,
+                font,
+                color,
+                bgcolor,
+                cellFormat,
+                nonTextValueFormat,
+                textValueFormat,
+                colspan,
+                rowspan,
+                cssc,
+                csss,
+                comment
+            );
         }
 
         static bool IsYes(string s) => "yes".Equals(s, StringComparison.OrdinalIgnoreCase);
